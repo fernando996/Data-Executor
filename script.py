@@ -1,5 +1,6 @@
 import os
 import argparse
+import MediaInfo
 
 ap = argparse.ArgumentParser()
 
@@ -23,14 +24,26 @@ print("Files and directories in '", args["directory"], "' :")
 # prints all files
 # print(dir_list)
 
-
-files = [f for f in dir_list if os.path.isfile(f)]
-for f in dir_list:
-    if os.path.isfile(f):
-        print(f)
-
+files = [] 
 
 # Listar os ficheiros de uma diretoria
 for entry in os.scandir(args["directory"]):
     if entry.is_file():
-        print(entry.name)
+        files.append(entry.name)
+print(files)
+
+for f in files:
+    fileInfo = MediaInfo.parse(f)
+    for track in fileInfo.tracks:
+        if track.track_type == "Video":
+            print(files)
+
+
+import ffmpeg
+
+def check_if_video(path):
+    metadata = get_metadata(path)
+    return metadata['codec_type'] == 'video'
+
+def get_metadata(path):
+    return ffmpeg.probe(path, select_streams = "v")['streams'][0]
