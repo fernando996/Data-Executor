@@ -70,6 +70,11 @@ for f in files:
             fileObj[l] = metaData[l]
 
         print(fileObj)
+
+        stream = ffmpeg.input(f)
+        stream = ffmpeg.hflip(stream)
+        stream = ffmpeg.output(stream, 'output.mp4')
+        ffmpeg.run(stream)
         #  'width': 1024, 'height': 576, 'coded_width': 1024, 'coded_height': 576, 
 
 
