@@ -2,6 +2,8 @@ import os
 import argparse
 import ffmpeg
 
+CONFIGS = ["width","height", "display_aspect_ratio","avg_frame_rate", "duration"]
+
 ap = argparse.ArgumentParser()
 
 ap.add_argument("-d", "--directory", required=True,
@@ -19,8 +21,7 @@ args = vars(ap.parse_args())
 # Get the list of all files and directories
 dir_list = os.listdir(args["directory"])
  
-print("Files and directories in '", args["directory"], "' :")
- 
+
 # prints all files
 # print(dir_list)
 
@@ -63,8 +64,14 @@ for entry in os.scandir(args["directory"]):
 # Processar os ficheiros
 for f in files:
     if fileHasVideoStream(f):
-        print(getMetadata(f))
+        metaData = getMetadata(f)
+        fileObj = {}
+        for l in CONFIGS:
+            fileObj[l] = metaData[l]
+
+        print(fileObj)
         #  'width': 1024, 'height': 576, 'coded_width': 1024, 'coded_height': 576, 
+
 
         # 'codec_name': 'h264',
         # 'codec_long_name': 'H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10', 
@@ -76,3 +83,5 @@ for f in files:
         # 'duration_ts': 205290000, 'duration': '2281.000000',
         # 'bit_rate': '2091719', 'bits_per_raw_sample': '8', 
 
+# https://github.com/kkroening/ffmpeg-python
+# https://github.com/kkroening/ffmpeg-python/tree/master/examples#audiovideo-pipeline
