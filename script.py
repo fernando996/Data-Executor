@@ -27,21 +27,52 @@ print("Files and directories in '", args["directory"], "' :")
 files = [] 
 
 
-def check_if_video(path):
-    metadata = get_metadata(path)
-    return metadata['codec_type'] == 'video'
+# def check_if_video(path):
+#     metadata = get_metadata(path)
+#     return metadata['codec_type'] == 'video'
 
-def get_metadata(path):
-    return ffmpeg.probe(path, select_streams = "v")['streams'][0]
+# def get_metadata(path):
+#     print(path)
+#     return ffmpeg.probe(path, select_streams = "v")['streams'][0]
 
+def getMetadata(filePath):
+    return ffmpeg.probe(filePath, select_streams = "v")['streams'][0]
+
+def fileHasVideoStream(file_path):
+     # video_stream = ffmpeg.probe(filePath, select_streams='v')['streams']
+    try:
+        video_stream = getMetadata(file_path)
+        if video_stream:
+            return True
+        return False
+    except ffmpeg.Error as e:
+        return False
+        print("output")
+        print(e.stdout)
+        print("err")
+        print(e.stderr)
+    
+
+
+    
 # Listar os ficheiros de uma diretoria
 for entry in os.scandir(args["directory"]):
     if entry.is_file():
-        files.append(entry.name)
-print(files)
+        files.append(entry.path)
 
+# Processar os ficheiros
 for f in files:
-    print(get_metadata(f))
+    if fileHasVideoStream(f):
+        print(getMetadata(f))
+        #  'width': 1024, 'height': 576, 'coded_width': 1024, 'coded_height': 576, 
 
-
+        # 'codec_name': 'h264',
+        # 'codec_long_name': 'H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10', 
+        # 'profile': 'High',
+        # 'display_aspect_ratio': '16:9',
+        # 'r_frame_rate': '25/1'
+        # 'avg_frame_rate': '25/1',
+        # duration
+        # 'duration_ts': 205290000, 'duration': '2281.000000',
+        # 'bit_rate': '2091719', 'bits_per_raw_sample': '8', 
 
