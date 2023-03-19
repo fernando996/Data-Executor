@@ -3,6 +3,9 @@ import argparse
 import ffmpeg
 
 CONFIGS = ["width","height", "display_aspect_ratio","avg_frame_rate", "duration"]
+# FILTERS = {"fps":[25,20,15,10,5,3,2,1], "width": [1920, 1280, 640, 480,240]}
+FILTERS = {"fps":[25,2,1], "scale": [ {"w":1920, "h": 1080}, {"w":1280, "h": 720} , {"w":640, "h": 480} ]}
+
 
 ap = argparse.ArgumentParser()
 
@@ -69,12 +72,26 @@ for f in files:
         for l in CONFIGS:
             fileObj[l] = metaData[l]
 
-        print(fileObj)
+        for fps in FILTERS["fps"]:
+            for width in FILTERS["scale"]:
+                print(width)
 
-        stream = ffmpeg.input(f)
-        stream = ffmpeg.hflip(stream)
-        stream = ffmpeg.output(stream, 'output.mp4')
-        ffmpeg.run(stream)
+                input_vid = ffmpeg.input(f)
+                vid = (
+                    input_vid
+                    .filter('scale', w = width["w"], h = width["h"])
+                    .filter('fps', fps=fps, round='up')
+                    .output(str(fps) + str(width) + 'output.mp4')
+                    .overwrite_output()
+                    .run()
+                )
+
+        
+
+        # stream = ffmpeg.input(f)
+        # stream = ffmpeg.hflip(stream)
+        # stream = ffmpeg.output(stream, 'output.mp4')
+        # # ffmpeg.run(stream)
         #  'width': 1024, 'height': 576, 'coded_width': 1024, 'coded_height': 576, 
 
 
