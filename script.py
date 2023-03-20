@@ -3,6 +3,7 @@ import argparse
 import ffmpeg
 import config
 import subprocess
+import time
 
 ap = argparse.ArgumentParser()
 
@@ -84,8 +85,12 @@ for entry in os.scandir(args["directory"]):
 for f in files:
     print(["python " + config.scriptLocation] + config.scriptParams)
     subprocess.run(["python", "--version"])
-
-    subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", f] )
+    st = time.time()
+    subprocess.run(["python", config.scriptLocation] +
+                   config.scriptParams + ["-i", f])
+    et = time.time()
+    elapsed_time = et - st
+    print('Execution time:', elapsed_time, 'seconds')
 
     # if fileHasVideoStream(f):
     #     metaData = getMetadata(f)
