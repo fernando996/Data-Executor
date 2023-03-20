@@ -63,7 +63,7 @@ def videoConvert(filePath, w, h, fps=25):
             input_vid
             .filter('scale', w = w, h = h)
             .filter('fps', fps=fps, round='up')
-            .output(str(fps) + str(w)+ str(h) + 'output.mp4')
+            .output("%sx%s_%s_output.mp4" % (w, h, fps))
             .overwrite_output()
             .run()
         )
