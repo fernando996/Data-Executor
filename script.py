@@ -85,7 +85,7 @@ for f in files:
     print(["python " + config.scriptLocation] + config.scriptParams)
     subprocess.run(["python", "--version"])
 
-    subprocess.run(["python", config.scriptLocation] + config.scriptParams)
+    subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", f] )
 
     # if fileHasVideoStream(f):
     #     metaData = getMetadata(f)
