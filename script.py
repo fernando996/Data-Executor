@@ -60,20 +60,29 @@ def videoConvert(filePath, w, h, fps=25):
     try:
         input_vid = ffmpeg.input(filePath)
         fileName = os.path.basename(filePath)
-        return (
+        convFileName = "%sx%s_%s_%s" % (w, h, fps, fileName)
+        (
             input_vid
             .filter('scale', w=w, h=h)
             .filter('fps', fps=fps, round='up')
-            .output("%sx%s_%s_%s" % (w, h, fps, fileName))
+            .output(convFileName)
             .overwrite_output()
             .run()
         )
+        return convFileName
     except ffmpeg.Error as e:
         # return False
         print("output")
         print(e.stdout)
         print("err")
         print(e.stderr)
+
+
+def processVideo(filePath):
+    st = time.time()
+    subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", filePath])
+    et = time.time()
+    return  et - st
 
 
 # Listar os ficheiros de uma diretoria
@@ -83,34 +92,33 @@ for entry in os.scandir(args["directory"]):
 
 # Processar os ficheiros
 for f in files:
-    print(["python " + config.scriptLocation] + config.scriptParams)
-    subprocess.run(["python", "--version"])
-    st = time.time()
-    # subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", f])
-    et = time.time()
-    elapsed_time = et - st
-    print('Execution time:', elapsed_time, 'seconds')
+    
+    # Check if is a video file
+    if fileHasVideoStream(f):
+        metaData = getMetadata(f)
+        fileObj = {}
+        for l in config.metadataProps:
+            fileObj[l] = metaData[l]
 
-    with open(config.outputFilePath, "r") as file:
-        lastLine = file.readlines()[-1].replace("\n", "")
-        lastLine = lastLine.split(";")
-        down     = lastLine[-2:-1]
-        up       = lastLine[-1:]
-        print(down)
-        # Down; Up
+        # Convert options
+        for fps in config.fps:
+            for width in config.scale:
+                fName = videoConvert(f, width["w"], width["h"], fps)
+
+                elapsed_time = processVideo(fName)
+
+                with open(config.outputFilePath, "r") as file:
+                    lastLine = file.readlines()[-1].replace("\n", "")
+                    lastLine = lastLine.split(";")
+                    down     = lastLine[-2:-1]
+                    up       = lastLine[-1:]
+                    print(down)
+                    # Down; Up
+                print(elapsed_time)
 
     # os.remove(config.outputFilePath)
 
 
-    # if fileHasVideoStream(f):
-    #     metaData = getMetadata(f)
-    #     fileObj = {}
-    #     for l in config.metadataProps:
-    #         fileObj[l] = metaData[l]
-
-    #     for fps in config.fps:
-    #         for width in config.scale:
-    #             videoConvert(f, width["w"], width["h"], fps)
     # subprocess.run(["python"] + [config.scriptLocation] + config.scriptParams)
 
     # 'codec_name': 'h264',
