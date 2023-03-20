@@ -86,11 +86,21 @@ for f in files:
     print(["python " + config.scriptLocation] + config.scriptParams)
     subprocess.run(["python", "--version"])
     st = time.time()
-    subprocess.run(["python", config.scriptLocation] +
-                   config.scriptParams + ["-i", f])
+    # subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", f])
     et = time.time()
     elapsed_time = et - st
     print('Execution time:', elapsed_time, 'seconds')
+
+    with open(config.outputFilePath, "r") as file:
+        lastLine = file.readlines()[-1].replace("\n", "")
+        lastLine = lastLine.split(";")
+        down     = lastLine[-2:-1]
+        up       = lastLine[-1:]
+        print(down)
+        # Down; Up
+
+    # os.remove(config.outputFilePath)
+
 
     # if fileHasVideoStream(f):
     #     metaData = getMetadata(f)
