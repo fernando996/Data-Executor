@@ -56,7 +56,23 @@ def fileHasVideoStream(file_path):
         print("err")
         print(e.stderr)
     
-
+def videoConvert(filePath, w, h, fps=25):
+    try:
+        input_vid = ffmpeg.input(filePath)
+        return (
+            input_vid
+            .filter('scale', w = w, h = h)
+            .filter('fps', fps=fps, round='up')
+            .output(str(fps) + str(w)+ str(h) + 'output.mp4')
+            .overwrite_output()
+            .run()
+        )
+    except ffmpeg.Error as e:
+        # return False
+        print("output")
+        print(e.stdout)
+        print("err")
+        print(e.stderr)
 
     
 # Listar os ficheiros de uma diretoria
@@ -74,17 +90,18 @@ for f in files:
 
         for fps in FILTERS["fps"]:
             for width in FILTERS["scale"]:
-                print(width)
+                # print(width)
 
-                input_vid = ffmpeg.input(f)
-                vid = (
-                    input_vid
-                    .filter('scale', w = width["w"], h = width["h"])
-                    .filter('fps', fps=fps, round='up')
-                    .output(str(fps) + str(width) + 'output.mp4')
-                    .overwrite_output()
-                    .run()
-                )
+                videoConvert(f, width["w"], width["h"], fps)
+                # input_vid = ffmpeg.input(f)
+                # vid = (
+                #     input_vid
+                #     .filter('scale', w = width["w"], h = width["h"])
+                #     .filter('fps', fps=fps, round='up')
+                #     .output(str(fps) + str(width) + 'output.mp4')
+                #     .overwrite_output()
+                #     .run()
+                # )
 
         
 
