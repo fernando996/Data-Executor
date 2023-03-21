@@ -78,11 +78,26 @@ def videoConvert(filePath, w, h, fps=25):
         print(e.stderr)
 
 
-def processVideo(filePath):
+def processVideo(filePath, params):
     st = time.time()
-    subprocess.run(["python", config.scriptLocation] + config.scriptParams + ["-i", filePath])
+    subprocess.run(["python", config.scriptLocation] +config.scriptParamsFixed + params + ["-i", filePath])
     et = time.time()
-    return  et - st
+    return et - st
+
+def getProccessData():
+    with open(config.outputFilePath, "r") as file:
+        lastLine = file.readlines()[-1].replace("\n", "")
+        lastLine = lastLine.split(";")
+        obj = {'down': lastLine[-2:-1][0], 'up': lastLine[-1:][0]}
+        return obj
+
+
+def getParams(param):
+    _params = []
+    for k, v in param.items():
+        _params = _params + [k] + [v]
+        print(_params)
+    return _params
 
 
 # Listar os ficheiros de uma diretoria
@@ -92,7 +107,7 @@ for entry in os.scandir(args["directory"]):
 
 # Processar os ficheiros
 for f in files:
-    
+
     # Check if is a video file
     if fileHasVideoStream(f):
         metaData = getMetadata(f)
@@ -105,20 +120,15 @@ for f in files:
             for width in config.scale:
                 fName = videoConvert(f, width["w"], width["h"], fps)
 
-                elapsed_time = processVideo(fName)
+                for param in config.scriptParams:
 
-                with open(config.outputFilePath, "r") as file:
-                    lastLine = file.readlines()[-1].replace("\n", "")
-                    lastLine = lastLine.split(";")
-                    down     = lastLine[-2:-1]
-                    up       = lastLine[-1:]
-                    print(down)
-                    # Down; Up
-                print(elapsed_time)
+                    elapsed_time = processVideo(fName, getParams(param))
 
-    # os.remove(config.outputFilePath)
+                    fileObj = {**fileObj, **getProccessData(), **param}
 
+                    os.remove(config.outputFilePath)
 
+                    print(fileObj)
     # subprocess.run(["python"] + [config.scriptLocation] + config.scriptParams)
 
     # 'codec_name': 'h264',
