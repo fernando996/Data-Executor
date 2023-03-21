@@ -17,17 +17,6 @@ ap.add_argument("-d", "--directory", required=True,
 # ap.add_argument("-s", "--skip-frames", type=int, default=30,
 #     help="# of skip frames between detections")
 
-args = vars(ap.parse_args())
-
-# Get the list of all files and directories
-dir_list = os.listdir(args["directory"])
-
-
-# prints all files
-# print(dir_list)
-
-files = []
-
 
 # def check_if_video(path):
 #     metadata = get_metadata(path)
@@ -80,9 +69,11 @@ def videoConvert(filePath, w, h, fps=25):
 
 def processVideo(filePath, params):
     st = time.time()
-    subprocess.run(["python", config.scriptLocation] +config.scriptParamsFixed + params + ["-i", filePath])
+    subprocess.run(["python", config.scriptLocation] +
+                   config.scriptParamsFixed + params + ["-i", filePath])
     et = time.time()
     return et - st
+
 
 def getProccessData():
     with open(config.outputFilePath, "r") as file:
@@ -99,6 +90,17 @@ def getParams(param):
         print(_params)
     return _params
 
+
+args = vars(ap.parse_args())
+
+# Get the list of all files and directories
+dir_list = os.listdir(args["directory"])
+
+files = []
+
+hWrite = False
+headers = config.metadataProps + \
+    ["fps", "width", "heigth", "filename", "fName"]
 
 # Listar os ficheiros de uma diretoria
 for entry in os.scandir(args["directory"]):
@@ -117,8 +119,14 @@ for f in files:
 
         # Convert options
         for fps in config.fps:
+            fileObj["fps"] = fps
             for width in config.scale:
+                fileObj["width"] = width["w"]
+                fileObj["heigth"] = width["h"]
+                fileObj["filename"] = f
+
                 fName = videoConvert(f, width["w"], width["h"], fps)
+                fileObj["fName"] = f
 
                 for param in config.scriptParams:
 
