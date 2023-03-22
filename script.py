@@ -155,6 +155,9 @@ def main():
                             os.remove(config.outputFilePath)
 
                         writeFileRow(fileObj)
+                    # Delete converted file
+                    if os.path.exists(fName):
+                        os.remove(fName)
 
 
 if __name__ == "__main__":
