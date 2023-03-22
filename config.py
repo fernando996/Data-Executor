@@ -6,13 +6,13 @@ scriptLocation = r"C:\Users\Fernando\Desktop\Cam\cam_counter_deliverable\cam_cou
 scriptParamsFixed = ["-p", r"C:\Users\Fernando\Desktop\Cam\cam_counter_deliverable\cam_counter\models\MobileNetSSD_deploy.prototxt",
                      "-m", r"C:\Users\Fernando\Desktop\Cam\cam_counter_deliverable\cam_counter\models\MobileNetSSD_deploy.caffemodel"]
 scriptParams = [{"-fw": "500", "--confidence": "0.4",  "-ss": "0"},
-                {"-fw": "600", "--confidence": "0.4",  "-ss": "0"}
+                {"-fw": "600", "--confidence": "0.4",  "-ss": "0"},
                 {"-fw": "720", "--confidence": "0.4",  "-ss": "0"},
                 {"-fw": "1080", "--confidence": "0.4",  "-ss": "0"},
                 {"-fw": "1920", "--confidence": "0.4",  "-ss": "0"},
                 {"-fw": "4000", "--confidence": "0.4",  "-ss": "0"},
                 {"-fw": "500", "--confidence": "0.8",  "-ss": "0"},
-                {"-fw": "600", "--confidence": "0.8",  "-ss": "0"}
+                {"-fw": "600", "--confidence": "0.8",  "-ss": "0"},
                 {"-fw": "720", "--confidence": "0.8",  "-ss": "0"},
                 {"-fw": "1080", "--confidence": "0.8",  "-ss": "0"},
                 {"-fw": "1920", "--confidence": "0.8",  "-ss": "0"},
