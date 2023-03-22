@@ -4,6 +4,7 @@ import ffmpeg
 import config
 import subprocess
 import time
+import csv
 
 ap = argparse.ArgumentParser()
 
@@ -31,7 +32,6 @@ def getMetadata(filePath):
 
 
 def fileHasVideoStream(file_path):
-    # video_stream = ffmpeg.probe(filePath, select_streams='v')['streams']
     try:
         video_stream = getMetadata(file_path)
         if video_stream:
@@ -39,17 +39,14 @@ def fileHasVideoStream(file_path):
         return False
     except ffmpeg.Error as e:
         return False
-        print("output")
-        print(e.stdout)
-        print("err")
-        print(e.stderr)
 
 
 def videoConvert(filePath, w, h, fps=25):
     try:
         input_vid = ffmpeg.input(filePath)
         fileName = os.path.basename(filePath)
-        convFileName = "%sx%s_%s_%s" % (w, h, fps, fileName)
+        convFileName = os.path.join(
+            'output', "%sx%s_%s_%s" % (w, h, fps, fileName))
         (
             input_vid
             .filter('scale', w=w, h=h)
@@ -60,7 +57,7 @@ def videoConvert(filePath, w, h, fps=25):
         )
         return convFileName
     except ffmpeg.Error as e:
-        # return False
+        return False
         print("output")
         print(e.stdout)
         print("err")
@@ -76,6 +73,9 @@ def processVideo(filePath, params):
 
 
 def getProccessData():
+    if os.path.exists(config.outputFilePath) is False or os.stat(config.outputFilePath).st_size == 0:
+        return {'down': 0, 'up': 0}
+
     with open(config.outputFilePath, "r") as file:
         lastLine = file.readlines()[-1].replace("\n", "")
         lastLine = lastLine.split(";")
@@ -87,56 +87,79 @@ def getParams(param):
     _params = []
     for k, v in param.items():
         _params = _params + [k] + [v]
-        print(_params)
     return _params
 
 
-args = vars(ap.parse_args())
+def getFileHeaders():
+    return config.metadataProps + \
+        ["fps", "c_width", "c_heigth", "filename", "fName", "up", "down", "elapsedTime"] + \
+        [k for k in config.scriptParams[0]]
 
-# Get the list of all files and directories
-dir_list = os.listdir(args["directory"])
 
-files = []
+def writeFileHeaders():
+    with open(config.runsOutputFileName, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.DictWriter(f, getFileHeaders())
+        writer.writeheader()
+        f.close()
 
-hWrite = False
-headers = config.metadataProps + \
-    ["fps", "width", "heigth", "filename", "fName"]
 
-# Listar os ficheiros de uma diretoria
-for entry in os.scandir(args["directory"]):
-    if entry.is_file():
-        files.append(entry.path)
+def writeFileRow(row):
+    with open(config.runsOutputFileName, 'a', encoding='UTF8', newline='') as f:
+        writer = csv.DictWriter(f, getFileHeaders())
+        writer.writerow(row)
+        f.close()
 
-# Processar os ficheiros
-for f in files:
 
-    # Check if is a video file
-    if fileHasVideoStream(f):
-        metaData = getMetadata(f)
-        fileObj = {}
-        for l in config.metadataProps:
-            fileObj[l] = metaData[l]
+def main():
+    args = vars(ap.parse_args())
 
-        # Convert options
-        for fps in config.fps:
-            fileObj["fps"] = fps
-            for width in config.scale:
-                fileObj["width"] = width["w"]
-                fileObj["heigth"] = width["h"]
-                fileObj["filename"] = f
+    writeFileHeaders()
 
-                fName = videoConvert(f, width["w"], width["h"], fps)
-                fileObj["fName"] = f
+    files = []
 
-                for param in config.scriptParams:
+    # Listar os ficheiros de uma diretoria
+    for entry in os.scandir(args["directory"]):
+        if entry.is_file():
+            files.append(entry.path)
 
-                    elapsed_time = processVideo(fName, getParams(param))
+    # Processar os ficheiros
+    for f in files:
 
-                    fileObj = {**fileObj, **getProccessData(), **param}
+        # Check if is a video file
+        if fileHasVideoStream(f):
+            metaData = getMetadata(f)
+            fileObj = {}
+            for l in config.metadataProps:
+                fileObj[l] = metaData[l]
 
-                    os.remove(config.outputFilePath)
+            # Convert options
+            for fps in config.fps:
+                fileObj["fps"] = fps
+                for width in config.scale:
+                    fileObj["c_width"] = width["w"]
+                    fileObj["c_heigth"] = width["h"]
 
-                    print(fileObj)
+                    fileObj["filename"] = f
+
+                    fName = videoConvert(f, width["w"], width["h"], fps)
+                    fileObj["fName"] = f
+
+                    for param in config.scriptParams:
+
+                        elapsed_time = processVideo(fName, getParams(param))
+
+                        fileObj = {**fileObj, **getProccessData(), **
+                                   param, "elapsedTime": elapsed_time}
+
+                        if os.path.exists(config.outputFilePath):
+                            os.remove(config.outputFilePath)
+
+                        writeFileRow(fileObj)
+
+
+if __name__ == "__main__":
+    main()
+
     # subprocess.run(["python"] + [config.scriptLocation] + config.scriptParams)
 
     # 'codec_name': 'h264',
