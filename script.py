@@ -5,9 +5,10 @@ import config
 import subprocess
 import time
 import csv
+from threading import Thread
+from uuid import uuid4
 
 ap = argparse.ArgumentParser()
-
 ap.add_argument("-d", "--directory", required=True,
                 help="path to directory with files")
 
@@ -64,10 +65,10 @@ def videoConvert(filePath, w, h, fps=25):
         print(e.stderr)
 
 
-def processVideo(filePath, params):
+def processVideo(filePath, params, globalFileOutput="global_log"):
     st = time.time()
     subprocess.run(["python", config.scriptLocation] +
-                   config.scriptParamsFixed + params + ["-i", filePath])
+                   config.scriptParamsFixed + params + ["-i", filePath, "-gf", globalFileOutput])
     et = time.time()
     return et - st
 
@@ -109,6 +110,24 @@ def writeFileRow(row):
         writer.writerow(row)
         f.close()
 
+def threadedProcessVideo(fName, fileObj, outputFilePath):
+    for param in config.scriptParams:
+
+        elapsed_time = processVideo(fName, getParams(param))
+
+        fileObj = {**fileObj, **getProccessData(), **
+                    param, "elapsedTime": elapsed_time}
+
+        if os.path.exists(outputFilePath):
+            os.remove(outputFilePath)
+
+        writeFileRow(fileObj)
+    # Delete converted file
+    if os.path.exists(fName):
+        os.remove(fName)
+
+ 
+
 
 def main():
     args = vars(ap.parse_args())
@@ -144,21 +163,8 @@ def main():
                     fName = videoConvert(f, width["w"], width["h"], fps)
                     fileObj["fName"] = f
 
-                    for param in config.scriptParams:
-
-                        elapsed_time = processVideo(fName, getParams(param))
-
-                        fileObj = {**fileObj, **getProccessData(), **
-                                   param, "elapsedTime": elapsed_time}
-
-                        if os.path.exists(config.outputFilePath):
-                            os.remove(config.outputFilePath)
-
-                        writeFileRow(fileObj)
-                    # Delete converted file
-                    if os.path.exists(fName):
-                        os.remove(fName)
-
+                    thread = Thread(target = threadedProcessVideo, args = (fName, fileObj,str(uuid4())))
+                    thread.start()
 
 if __name__ == "__main__":
     main()
