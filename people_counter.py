@@ -61,7 +61,7 @@ ap.add_argument("-hd", "--hd-output", type=int, default=1,
     help="outputs the image in the same size as input, otherwise, exports with the resize frame width")
 ap.add_argument("-ss", "--server-send", type=int, default=1,
     help="send data to remote server")
-ap.add_argument("-gf", "--global-file", type=str, default='global_log',
+ap.add_argument("-gf", "--global-file", type=str, default='global_log.csv',
     help="path to optional global file output")
 args = vars(ap.parse_args())
 
@@ -82,7 +82,7 @@ print('[CONFIG] ------------------------')
 # init config
 PATH_OUTPUT = 'output/'
 PATH_OUTPUT_RUNS = PATH_OUTPUT + 'runs/'
-GLOBAL_FILE_OUTPUT = args["global_file"] + ".csv"
+GLOBAL_FILE_OUTPUT = args["global_file"]
 CONFIG_FILENAME = "config_project.json"
 CONFIG = Config()
 CONFIG.load_config_values(CONFIG_FILENAME)

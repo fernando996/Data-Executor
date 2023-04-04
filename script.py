@@ -7,6 +7,7 @@ import time
 import csv
 from threading import Thread
 from uuid import uuid4
+from pathlib import Path
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--directory", required=True,
@@ -68,7 +69,7 @@ def videoConvert(filePath, w, h, fps=25):
 def processVideo(filePath, params, globalFileOutput="global_log"):
     st = time.time()
     subprocess.run(["python", config.scriptLocation] +
-                   config.scriptParamsFixed + params + ["-i", filePath, "-gf", globalFileOutput])
+                   config.scriptParamsFixed + params + ["-i", filePath, "--global-file", globalFileOutput])
     et = time.time()
     return et - st
 
@@ -110,13 +111,14 @@ def writeFileRow(row):
         writer.writerow(row)
         f.close()
 
+
 def threadedProcessVideo(fName, fileObj, outputFilePath):
     for param in config.scriptParams:
 
-        elapsed_time = processVideo(fName, getParams(param))
+        elapsed_time = processVideo(fName, getParams(param), outputFilePath)
 
         fileObj = {**fileObj, **getProccessData(), **
-                    param, "elapsedTime": elapsed_time}
+                   param, "elapsedTime": elapsed_time}
 
         if os.path.exists(outputFilePath):
             os.remove(outputFilePath)
@@ -126,7 +128,9 @@ def threadedProcessVideo(fName, fileObj, outputFilePath):
     if os.path.exists(fName):
         os.remove(fName)
 
- 
+    # Delete converted file
+    if os.path.exists("output/" + outputFilePath):
+        os.remove("output/" + outputFilePath)
 
 
 def main():
@@ -163,8 +167,10 @@ def main():
                     fName = videoConvert(f, width["w"], width["h"], fps)
                     fileObj["fName"] = f
 
-                    thread = Thread(target = threadedProcessVideo, args = (fName, fileObj,str(uuid4())))
+                    thread = Thread(target=threadedProcessVideo,
+                                    args=(fName, fileObj, str(uuid4())+".csv"))
                     thread.start()
+
 
 if __name__ == "__main__":
     main()
