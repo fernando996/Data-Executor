@@ -30,7 +30,8 @@ ap.add_argument("-d", "--directory", required=True,
 #     return ffmpeg.probe(path, select_streams = "v")['streams'][0]
 
 def getMetadata(filePath):
-    return ffmpeg.probe(filePath, select_streams="v")['streams'][0]
+    _probe = ffmpeg.probe(filePath, select_streams="v")['streams']
+    return _probe[0] if len(_probe) else None
 
 
 def fileHasVideoStream(file_path):
