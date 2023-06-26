@@ -156,6 +156,20 @@ def main():
             for l in config.metadataProps:
                 fileObj[l] = metaData[l]
 
+            if hasattr(config, 'fps') is False :
+                fileObj["c_width"] = fileObj["width"]
+                fileObj["c_heigth"] =fileObj["height"] 
+
+                fileObj["filename"] = f
+
+                fName = f
+                fileObj["fName"] = f
+
+                thread = Thread(target=threadedProcessVideo,
+                                    args=(fName, fileObj, str(uuid4())+".csv"))
+                thread.start()
+                return
+
             # Convert options
             for fps in config.fps:
                 fileObj["fps"] = fps
