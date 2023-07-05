@@ -113,20 +113,25 @@ def writeFileRow(row):
         f.close()
 
 
-def threadedProcessVideo(fName, fileObj, outputFilePath):
+def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
+
+    times = config.times or 1
+
     for param in config.scriptParams:
 
-        elapsed_time = processVideo(fName, getParams(param), outputFilePath)
+        for x in range(times):
+            elapsed_time = processVideo(
+                fName, getParams(param), outputFilePath)
 
-        fileObj = {**fileObj, **getProccessData(), **
-                   param, "elapsedTime": elapsed_time}
+            fileObj = {**fileObj, **getProccessData(), **
+                       param, "elapsedTime": elapsed_time}
 
         if os.path.exists(outputFilePath):
             os.remove(outputFilePath)
 
         writeFileRow(fileObj)
     # Delete converted file
-    if os.path.exists(fName):
+    if delete and os.path.exists(fName):
         os.remove(fName)
 
     # Delete converted file
@@ -148,7 +153,6 @@ def main():
 
     # Processar os ficheiros
     for f in files:
-
         # Check if is a video file
         if fileHasVideoStream(f):
             metaData = getMetadata(f)
@@ -156,9 +160,9 @@ def main():
             for l in config.metadataProps:
                 fileObj[l] = metaData[l]
 
-            if hasattr(config, 'fps') is False :
+            if hasattr(config, 'fps') is False:
                 fileObj["c_width"] = fileObj["width"]
-                fileObj["c_heigth"] =fileObj["height"] 
+                fileObj["c_heigth"] = fileObj["height"]
 
                 fileObj["filename"] = f
 
@@ -166,9 +170,9 @@ def main():
                 fileObj["fName"] = f
 
                 thread = Thread(target=threadedProcessVideo,
-                                    args=(fName, fileObj, str(uuid4())+".csv"))
+                                args=(fName, fileObj, str(uuid4())+".csv", False))
                 thread.start()
-                return
+                continue
 
             # Convert options
             for fps in config.fps:
