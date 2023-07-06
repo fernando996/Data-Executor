@@ -13,6 +13,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--directory", required=True,
                 help="path to directory with files")
 
+# creating thread instance where count = 3
+sem = Semaphore(30)  
+
 # ap.add_argument("-o", "--output", type=str,
 #     help="path to optional output video file")
 # ap.add_argument("-dl", "--detection-line", type=float, default=0.5,
@@ -114,6 +117,8 @@ def writeFileRow(row):
 
 
 def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
+    # calling acquire method
+    sem.acquire()      
     for param in config.scriptParams:
 
         elapsed_time = processVideo(
@@ -134,6 +139,9 @@ def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     # Delete converted file
     if os.path.exists("output/" + outputFilePath):
         os.remove("output/" + outputFilePath)
+    
+    # calling release method
+    sem.release()    
 
 
 def main():
