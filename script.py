@@ -114,22 +114,19 @@ def writeFileRow(row):
 
 
 def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
-
-    times = config.times or 1
-
     for param in config.scriptParams:
 
-        for x in range(times):
-            elapsed_time = processVideo(
-                fName, getParams(param), outputFilePath)
+        elapsed_time = processVideo(
+            fName, getParams(param), outputFilePath)
 
-            fileObj = {**fileObj, **getProccessData(), **
-                       param, "elapsedTime": elapsed_time}
+        fileObj = {**fileObj, **getProccessData(), **
+                    param, "elapsedTime": elapsed_time}
+
+        writeFileRow(fileObj)
 
         if os.path.exists(outputFilePath):
             os.remove(outputFilePath)
-
-        writeFileRow(fileObj)
+   
     # Delete converted file
     if delete and os.path.exists(fName):
         os.remove(fName)
@@ -169,9 +166,13 @@ def main():
                 fName = f
                 fileObj["fName"] = f
 
-                thread = Thread(target=threadedProcessVideo,
-                                args=(fName, fileObj, str(uuid4())+".csv", False))
-                thread.start()
+                times = config.times or 1
+                
+                for x in range(times):
+                    thread = Thread(target=threadedProcessVideo,
+                                    args=(fName, fileObj, str(uuid4())+".csv", False))
+                    thread.start()
+
                 continue
 
             # Convert options
@@ -186,9 +187,10 @@ def main():
                     fName = videoConvert(f, width["w"], width["h"], fps)
                     fileObj["fName"] = f
 
-                    thread = Thread(target=threadedProcessVideo,
-                                    args=(fName, fileObj, str(uuid4())+".csv"))
-                    thread.start()
+                    for x in range(times):
+                        thread = Thread(target=threadedProcessVideo,
+                                        args=(fName, fileObj, str(uuid4())+".csv"))
+                        thread.start()
 
 
 if __name__ == "__main__":
