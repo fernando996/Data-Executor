@@ -8,13 +8,14 @@ import csv
 from threading import Thread
 from uuid import uuid4
 from pathlib import Path
+from threading import Semaphore
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--directory", required=True,
                 help="path to directory with files")
 
 # creating thread instance where count = 3
-sem = Semaphore(30)  
+sem = Semaphore(10)  
 
 # ap.add_argument("-o", "--output", type=str,
 #     help="path to optional output video file")
