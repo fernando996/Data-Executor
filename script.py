@@ -15,7 +15,9 @@ ap.add_argument("-d", "--directory", required=True,
                 help="path to directory with files")
 
 # creating thread instance where count = 3
-sem = Semaphore(10)  
+sem = Semaphore(5)
+
+threads = []
 
 # ap.add_argument("-o", "--output", type=str,
 #     help="path to optional output video file")
@@ -119,20 +121,20 @@ def writeFileRow(row):
 
 def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     # calling acquire method
-    sem.acquire()      
+    sem.acquire()
     for param in config.scriptParams:
 
         elapsed_time = processVideo(
             fName, getParams(param), outputFilePath)
 
         fileObj = {**fileObj, **getProccessData(), **
-                    param, "elapsedTime": elapsed_time}
+                   param, "elapsedTime": elapsed_time}
 
         writeFileRow(fileObj)
 
         if os.path.exists(outputFilePath):
             os.remove(outputFilePath)
-   
+
     # Delete converted file
     if delete and os.path.exists(fName):
         os.remove(fName)
@@ -140,9 +142,9 @@ def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     # Delete converted file
     if os.path.exists("output/" + outputFilePath):
         os.remove("output/" + outputFilePath)
-    
+
     # calling release method
-    sem.release()    
+    sem.release()
 
 
 def main():
@@ -176,11 +178,12 @@ def main():
                 fileObj["fName"] = f
 
                 times = config.times or 1
-                
+
                 for x in range(times):
                     thread = Thread(target=threadedProcessVideo,
                                     args=(fName, fileObj, str(uuid4())+".csv", False))
                     thread.start()
+                    threads.append(thread)
 
                 continue
 
@@ -200,6 +203,9 @@ def main():
                         thread = Thread(target=threadedProcessVideo,
                                         args=(fName, fileObj, str(uuid4())+".csv"))
                         thread.start()
+
+    for t in threads:
+        t.join()
 
 
 if __name__ == "__main__":
