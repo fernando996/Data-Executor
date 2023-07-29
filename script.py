@@ -6,7 +6,7 @@ import subprocess
 import time
 import csv
 from threading import Thread
-from uuid import uuid4
+import uuid
 from pathlib import Path
 from threading import Semaphore
 
@@ -75,8 +75,14 @@ def videoConvert(filePath, w, h, fps=25):
 
 def processVideo(filePath, params, globalFileOutput="global_log"):
     st = time.time()
-    subprocess.run(["python", config.scriptLocation] +
-                   config.scriptParamsFixed + params + ["-i", filePath, "--global-file", globalFileOutput])
+
+    script = ["python", config.scriptLocation] + config.scriptParamsFixed + params + ["-i", filePath, "--global-file", globalFileOutput, "--hd-output", "0"]
+
+    if config.outputVideo:
+        _file = filePath.rsplit('/', 1)[-1]
+        _output = config.outputVideo + "/"+ globalFileOutput + _file + ".avi"
+        script=script+["-o", _output]
+    subprocess.run(script)
     et = time.time()
     return et - st
 
@@ -118,6 +124,8 @@ def writeFileRow(row):
         writer.writerow(row)
         f.close()
 
+def getUuid():
+    return uuid.UUID(bytes=os.urandom(16), version=4)
 
 def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     # calling acquire method
@@ -181,7 +189,7 @@ def main():
 
                 for x in range(times):
                     thread = Thread(target=threadedProcessVideo,
-                                    args=(fName, fileObj, str(uuid4())+".csv", False))
+                                    args=(fName, fileObj, str(getUuid())+".csv", False))
                     thread.start()
                     threads.append(thread)
 
@@ -201,7 +209,7 @@ def main():
 
                     for x in range(times):
                         thread = Thread(target=threadedProcessVideo,
-                                        args=(fName, fileObj, str(uuid4())+".csv"))
+                                        args=(fName, fileObj, str(getUuid())+".csv"))
                         thread.start()
 
     for t in threads:
