@@ -76,22 +76,27 @@ def videoConvert(filePath, w, h, fps=25):
 def processVideo(filePath, params, globalFileOutput="global_log"):
     st = time.time()
 
-    script = ["python", config.scriptLocation] + config.scriptParamsFixed + params + ["-i", filePath, "--global-file", globalFileOutput, "--hd-output", "0"]
+    script = ["python", config.scriptLocation] + config.scriptParamsFixed + \
+        params + ["-i", filePath, "-gf", globalFileOutput, "--hd-output", "0"]
 
-    if config.outputVideo:
-        _file = filePath.rsplit('/', 1)[-1]
-        _output = config.outputVideo + "/"+ globalFileOutput + _file + ".avi"
-        script=script+["-o", _output]
+    if hasattr(config, 'outputVideo'):
+        _file   = os.path.basename(filePath)
+        _output = os.path.join(config.outputVideo, globalFileOutput + _file + ".avi")
+        print(_output)
+        script  = script + ["-o", _output]
+
     subprocess.run(script)
     et = time.time()
     return et - st
 
 
-def getProccessData():
-    if os.path.exists(config.outputFilePath) is False or os.stat(config.outputFilePath).st_size == 0:
+def getProccessData(outputFilePath=None):
+    if outputFilePath is None:
+        outputFilePath = config.outputFilePath
+    if os.path.exists(outputFilePath) is False or os.stat(outputFilePath).st_size == 0:
         return {'down': 0, 'up': 0}
 
-    with open(config.outputFilePath, "r") as file:
+    with open(outputFilePath, "r") as file:
         lastLine = file.readlines()[-1].replace("\n", "")
         lastLine = lastLine.split(";")
         obj = {'down': lastLine[-2:-1][0], 'up': lastLine[-1:][0]}
@@ -107,7 +112,7 @@ def getParams(param):
 
 def getFileHeaders():
     return config.metadataProps + \
-        ["fps", "c_width", "c_heigth", "filename", "fName", "up", "down", "elapsedTime"] + \
+        ["fps", "c_width", "c_heigth", "filename", "fName", "up", "down", "elapsedTime", "uuid"] + \
         [k for k in config.scriptParams[0]]
 
 
@@ -124,8 +129,10 @@ def writeFileRow(row):
         writer.writerow(row)
         f.close()
 
+
 def getUuid():
     return uuid.UUID(bytes=os.urandom(16), version=4)
+
 
 def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     # calling acquire method
@@ -135,10 +142,10 @@ def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
         elapsed_time = processVideo(
             fName, getParams(param), outputFilePath)
 
-        fileObj = {**fileObj, **getProccessData(), **
-                   param, "elapsedTime": elapsed_time}
+        _fileObj = {**fileObj, **getProccessData(outputFilePath), **
+                    param, "elapsedTime": elapsed_time}
 
-        writeFileRow(fileObj)
+        writeFileRow(_fileObj)
 
         if os.path.exists(outputFilePath):
             os.remove(outputFilePath)
@@ -151,6 +158,7 @@ def threadedProcessVideo(fName, fileObj, outputFilePath, delete=True):
     if os.path.exists("output/" + outputFilePath):
         os.remove("output/" + outputFilePath)
 
+    del fileObj
     # calling release method
     sem.release()
 
@@ -188,10 +196,16 @@ def main():
                 times = config.times or 1
 
                 for x in range(times):
+                    _uuid = str(getUuid())
+
+                    _fileObj = fileObj.copy()
+                    _fileObj["uuid"] = _uuid
+
                     thread = Thread(target=threadedProcessVideo,
-                                    args=(fName, fileObj, str(getUuid())+".csv", False))
+                                    args=(fName, _fileObj, _uuid + ".csv", False))
                     thread.start()
                     threads.append(thread)
+                    del _fileObj
 
                 continue
 
@@ -208,9 +222,16 @@ def main():
                     fileObj["fName"] = f
 
                     for x in range(times):
+                        _uuid = str(getUuid())
+
+                        _fileObj = fileObj.copy()
+                        _fileObj["uuid"] = _uuid
+
                         thread = Thread(target=threadedProcessVideo,
-                                        args=(fName, fileObj, str(getUuid())+".csv"))
+                                        args=(fName, _fileObj, _uuid+".csv"))
                         thread.start()
+                        threads.append(thread)
+                        del _fileObj
 
     for t in threads:
         t.join()
